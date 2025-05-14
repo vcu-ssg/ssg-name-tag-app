@@ -1,5 +1,14 @@
-// contexts/settings-context.tsx
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_EMAIL = 'ssg-settings.email';
+const STORAGE_OCR_KEY = 'ssg-settings.ocrApiKey';
 
 type SettingsContextType = {
   email: string;
@@ -8,14 +17,44 @@ type SettingsContextType = {
   setOcrApiKey: (key: string) => void;
 };
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+const SettingsContext = createContext<SettingsContextType | undefined>(
+  undefined
+);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [email, setEmail] = useState('');
-  const [ocrApiKey, setOcrApiKey] = useState('');
+  const [email, setEmailState] = useState('');
+  const [ocrApiKey, setOcrApiKeyState] = useState('');
+
+  // Load from storage on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const storedEmail = await AsyncStorage.getItem(STORAGE_EMAIL);
+        const storedApiKey = await AsyncStorage.getItem(STORAGE_OCR_KEY);
+        if (storedEmail) setEmailState(storedEmail);
+        if (storedApiKey) setOcrApiKeyState(storedApiKey);
+      } catch (error) {
+        console.warn('Failed to load settings from storage', error);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  // Wrapped setters: update state + persist to AsyncStorage
+  const setEmail = (value: string) => {
+    setEmailState(value);
+    AsyncStorage.setItem(STORAGE_EMAIL, value);
+  };
+
+  const setOcrApiKey = (value: string) => {
+    setOcrApiKeyState(value);
+    AsyncStorage.setItem(STORAGE_OCR_KEY, value);
+  };
 
   return (
-    <SettingsContext.Provider value={{ email, setEmail, ocrApiKey, setOcrApiKey }}>
+    <SettingsContext.Provider
+      value={{ email, setEmail, ocrApiKey, setOcrApiKey }}
+    >
       {children}
     </SettingsContext.Provider>
   );
