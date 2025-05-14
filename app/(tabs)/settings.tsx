@@ -12,8 +12,10 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
+import { useSettings } from '@/contexts/settings-context';
+
 export default function SettingsScreen() {
-  const [email, setEmail] = useState('');
+  const {email, setEmail} = useSettings();
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
 
