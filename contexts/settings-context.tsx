@@ -7,6 +7,12 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import {
+  RESET_STORAGE_ON_START,
+  DEFAULT_EMAIL,
+  DEFAULT_OCR_API_KEY,
+} from '@/constants/env';
+
 const STORAGE_EMAIL = 'ssg-name-tagger-settings.email';
 const STORAGE_OCR_KEY = 'ssg-name-tagger-settings.ocrApiKey';
 
@@ -25,22 +31,40 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [email, setEmailState] = useState('');
   const [ocrApiKey, setOcrApiKeyState] = useState('');
 
-  // Load from storage on mount
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const storedEmail = await AsyncStorage.getItem(STORAGE_EMAIL);
-        const storedApiKey = await AsyncStorage.getItem(STORAGE_OCR_KEY);
-        if (storedEmail) setEmailState(storedEmail);
-        if (storedApiKey) setOcrApiKeyState(storedApiKey);
+        if (RESET_STORAGE_ON_START) {
+          await AsyncStorage.multiRemove([STORAGE_EMAIL, STORAGE_OCR_KEY]);
+          console.log('Settings storage reset due to .env flag.');
+        }
+
+        const [storedEmail, storedApiKey] = await AsyncStorage.multiGet([
+          STORAGE_EMAIL,
+          STORAGE_OCR_KEY,
+        ]);
+
+        const emailValue = storedEmail?.[1] || DEFAULT_EMAIL;
+        const apiKeyValue = storedApiKey?.[1] || DEFAULT_OCR_API_KEY;
+
+        setEmailState(emailValue);
+        setOcrApiKeyState(apiKeyValue);
+
+        // Ensure defaults get saved if not present
+        if (!storedEmail?.[1]) {
+          await AsyncStorage.setItem(STORAGE_EMAIL, emailValue);
+        }
+        if (!storedApiKey?.[1]) {
+          await AsyncStorage.setItem(STORAGE_OCR_KEY, apiKeyValue);
+        }
       } catch (error) {
-        console.warn('Failed to load settings from storage', error);
+        console.warn('Failed to initialize settings from storage', error);
       }
     };
+
     loadSettings();
   }, []);
 
-  // Wrapped setters: update state + persist to AsyncStorage
   const setEmail = (value: string) => {
     setEmailState(value);
     AsyncStorage.setItem(STORAGE_EMAIL, value);
