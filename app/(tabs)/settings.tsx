@@ -16,7 +16,8 @@ import { useSettings } from '@/contexts/settings-context';
 
 export default function SettingsScreen() {
   const {email, setEmail} = useSettings();
-  const [apiKey, setApiKey] = useState('');
+  const {ocrApiKey, setOcrApiKey } = useSettings();
+  
   const [showApiKey, setShowApiKey] = useState(false);
 
   return (
@@ -52,8 +53,8 @@ export default function SettingsScreen() {
             secureTextEntry={!showApiKey}
             autoCapitalize="none"
             autoCorrect={false}
-            value={apiKey}
-            onChangeText={setApiKey}
+            value={ocrApiKey}
+            onChangeText={setOcrApiKey}
           />
           <TouchableOpacity onPress={() => setShowApiKey(prev => !prev)}>
             <IconSymbol

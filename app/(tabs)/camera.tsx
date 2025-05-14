@@ -1,6 +1,8 @@
 import { Image } from 'expo-image';
 import { Platform, StyleSheet } from 'react-native';
 
+import { useSettings } from '@/contexts/settings-context';
+
 import { Collapsible } from '@/components/Collapsible';
 import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -9,6 +11,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
 export default function CameraScreen() {
+  const { ocrApiKey } = useSettings();
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -24,6 +27,7 @@ export default function CameraScreen() {
         <ThemedText type="title">Camera</ThemedText>
       </ThemedView>
       <ThemedText>This app includes example code to help you get started.</ThemedText>
+      <ThemedText>API Key: {ocrApiKey}</ThemedText>
     </ParallaxScrollView>
   );
 }
