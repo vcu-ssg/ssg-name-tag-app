@@ -1,28 +1,14 @@
+console.log("✅ index.tsx loaded");
+
+
 import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet } from 'react-native';
 
-export default function ScanScreen() {
-  const router = useRouter();
-
+export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Scan Name Tags</Text>
-
-      {/* Placeholder button to simulate scanning */}
-      <Button
-        title="Simulate Scan and Go to Email Screen"
-        onPress={() => router.push('/email')}
-      />
-
-      {/* Optional: Navigate to settings directly */}
-      <View style={{ marginTop: 20 }}>
-        <Button
-          title="Settings"
-          onPress={() => router.push('/settings')}
-          color="#666"
-        />
-      </View>
+      <Text style={styles.title}>🎉 Welcome to the Name Tag App</Text>
+      <Text style={styles.subtitle}>This is your home screen.</Text>
     </View>
   );
 }
@@ -32,12 +18,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#555',
     textAlign: 'center',
   },
 });
