@@ -7,8 +7,8 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STORAGE_EMAIL = 'ssg-settings.email';
-const STORAGE_OCR_KEY = 'ssg-settings.ocrApiKey';
+const STORAGE_EMAIL = 'ssg-name-tagger-settings.email';
+const STORAGE_OCR_KEY = 'ssg-name-tagger-settings.ocrApiKey';
 
 type SettingsContextType = {
   email: string;
