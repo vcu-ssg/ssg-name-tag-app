@@ -2,20 +2,16 @@ import { useState } from 'react';
 import {
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 
-import { useSettings } from '@/contexts/settings-context';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
 export default function CameraScreen() {
-  const { ocrApiKey } = useSettings();
-
-  const [facing, setFacing] = useState<CameraType>('back');
+  const [facing] = useState<CameraType>('back');
+  const [inputText, setInputText] = useState('');
   const [permission, requestPermission] = useCameraPermissions();
 
   if (!permission) {
@@ -24,65 +20,115 @@ export default function CameraScreen() {
 
   if (!permission.granted) {
     return (
-      <ThemedView style={styles.container}>
-        <Text style={styles.message}>We need your permission to show the camera</Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.button}>
-          <Text style={styles.text}>Grant Permission</Text>
+      <View style={styles.container}>
+        <Text style={styles.message}>We need your permission to use the camera</Text>
+        <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+          <Text style={styles.permissionText}>Grant Permission</Text>
         </TouchableOpacity>
-      </ThemedView>
+      </View>
     );
   }
 
-  function toggleCameraFacing() {
-    setFacing((current) => (current === 'back' ? 'front' : 'back'));
+  function handleSnapBadge() {
+    console.log('📸 Snap Badge pressed');
+    // Implementation will come later
   }
 
+  function handleAddNameToList() {
+    console.log('📸 Add name to list');
+    // Implementation will come later
+  }
   return (
-    <ThemedView style={styles.container}>
-      <CameraView style={styles.camera} facing={facing}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-            <Text style={styles.text}>Flip Camera</Text>
-          </TouchableOpacity>
-        </View>
-      </CameraView>
-      <Text style={styles.apiKey}>OCR API Key: {ocrApiKey}</Text>
-    </ThemedView>
+    <View style={styles.container}>
+      <View style={styles.cameraWrapper}>
+        <CameraView style={styles.camera} facing={facing} />
+      </View>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Enter text here"
+        value={inputText}
+        onChangeText={setInputText}
+      />
+
+      <TouchableOpacity style={styles.snapButton} onPress={handleSnapBadge}>
+        <Text style={styles.snapButtonText}>Snap Badge</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.addNameButton} onPress={handleAddNameToList}>
+        <Text style={styles.addNameButtonText}>Add name to list</Text>
+      </TouchableOpacity>
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
+    justifyContent: 'flex-start',
+    backgroundColor: '#fff',
   },
   message: {
     textAlign: 'center',
-    paddingVertical: 20,
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  permissionButton: {
+    alignSelf: 'center',
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  permissionText: {
+    color: 'white',
+    fontWeight: 'bold',
     fontSize: 16,
   },
+  cameraWrapper: {
+    width: '100%',
+    height: 240, // roughly triple the previous height
+    overflow: 'hidden',
+    borderRadius: 12,
+    backgroundColor: '#000',
+    marginBottom: 16,
+  },
   camera: {
-    flex: 1,
+    width: '100%',
+    height: '300%', // still stretch camera view for cropping
+    transform: [{ translateY: '-33%' }],
   },
-  buttonContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: 'transparent',
-    margin: 64,
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    marginBottom: 16,
   },
-  button: {
-    flex: 1,
-    alignSelf: 'flex-end',
+  snapButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  text: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
+  addNameButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
   },
-  apiKey: {
-    textAlign: 'center',
-    padding: 10,
-    fontSize: 12,
-    color: '#888',
+  snapButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  addNameButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
