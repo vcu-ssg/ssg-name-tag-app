@@ -24,7 +24,8 @@ type SettingsContextType = {
   setOcrApiKey: (key: string) => void;
   scannedNames: string[];
   addScannedName: (name: string) => void;
-  clearScannedNames: () => void;  
+  clearScannedNames: () => void;
+  setScannedNames: (names: string[]) => void; 
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
@@ -93,12 +94,20 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     AsyncStorage.removeItem(STORAGE_SCANNED_NAMES);
   };
 
+  const setScannedNamesPersisted = (names: string[]) => {
+    setScannedNames(names);
+    AsyncStorage.setItem(STORAGE_SCANNED_NAMES, JSON.stringify(names));
+  };  
+
   return (
     <SettingsContext.Provider
       value={{
         email, setEmail,
         ocrApiKey, setOcrApiKey,
-        scannedNames, addScannedName, clearScannedNames }}
+        scannedNames, 
+        addScannedName, 
+        clearScannedNames,
+        setScannedNames : setScannedNamesPersisted }}
     >
       {children}
     </SettingsContext.Provider>

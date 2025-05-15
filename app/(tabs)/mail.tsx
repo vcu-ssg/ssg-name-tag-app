@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect,useCallback } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
+
+import debounce from 'lodash.debounce';
 
 import {
   writeAsStringAsync,
@@ -34,7 +36,7 @@ import { ThemedText } from '@/components/ThemedText';
 
 
 export default function MailScreen() {
-  const { email, scannedNames } = useSettings();
+  const { email, scannedNames,setScannedNames } = useSettings();
 
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -49,6 +51,20 @@ export default function MailScreen() {
     setSubject(`New event: ${formattedDate}`);
     setBody(scannedNames.join('\n'));
   }, [scannedNames]);
+
+  const debouncedSetScannedNames = useCallback(
+    debounce((names: string[]) => setScannedNames(names), 300),
+    []
+  );
+
+  const handleBodyChange = (text: string) => {
+    setBody(text);
+    const updatedNames = text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+    debouncedSetScannedNames(updatedNames);
+  };
 
   const handleSend = async () => {
     if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
@@ -147,7 +163,7 @@ export default function MailScreen() {
           <TextInput
             style={styles.textarea}
             value={body}
-            onChangeText={setBody}
+            onChangeText={handleBodyChange}
             multiline
             numberOfLines={10}
             textAlignVertical="top"
