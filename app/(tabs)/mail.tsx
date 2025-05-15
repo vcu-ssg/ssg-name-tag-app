@@ -11,7 +11,7 @@ import { useSettings } from '@/contexts/settings-context';
 
 
 export default function MailScreen() {
-  const { email } = useSettings();
+  const { email,scannedNames } = useSettings();
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -28,6 +28,7 @@ export default function MailScreen() {
       </ThemedView>
       <ThemedText>This app includes example code to help you get started.</ThemedText>
       <ThemedText>{email}</ThemedText>
+      <ThemedText>{scannedNames}</ThemedText>
     </ParallaxScrollView>
   );
 }

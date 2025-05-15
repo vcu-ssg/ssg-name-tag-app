@@ -20,7 +20,7 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useSettings } from '@/contexts/settings-context';
 
 export default function CameraScreen() {
-  const { ocrApiKey } = useSettings();
+  const { ocrApiKey,addScannedName,scannedNames } = useSettings();
   const [permission, requestPermission] = useCameraPermissions();
   const [inputText, setInputText] = useState('');
 
@@ -104,8 +104,14 @@ export default function CameraScreen() {
   }
 
   function handleAddNameToList() {
-    console.log('📋 Add name to list:', inputText);
-    // Implementation will come later
+    if (inputText.trim()) {
+      console.log('📋 Add name to list:', inputText);
+      addScannedName(inputText.trim());
+      setInputText('');
+      setPhoto(null);
+    } else {
+      console.warn('⚠️ No name entered to add.');
+    }
   }
 
   return (
