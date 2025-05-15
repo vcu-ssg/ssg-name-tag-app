@@ -1,23 +1,34 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Image,
+  Platform,
 } from 'react-native';
 
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import {
+  CameraView,
+  CameraType,
+  useCameraPermissions,
+} from 'expo-camera';
+
+import { useSettings } from '@/contexts/settings-context';
 
 export default function CameraScreen() {
-  const [facing] = useState<CameraType>('back');
-  const [inputText, setInputText] = useState('');
+  const { ocrApiKey } = useSettings();
   const [permission, requestPermission] = useCameraPermissions();
+  const [inputText, setInputText] = useState('');
 
-  if (!permission) {
-    return <View />;
-  }
+  const [photo, setPhoto] = useState(null);
 
+  const cameraRef = useRef(null);
+
+  const [facing] = useState<CameraType>('back');
+
+  if (!permission) return <View />;
   if (!permission.granted) {
     return (
       <View style={styles.container}>
@@ -29,19 +40,66 @@ export default function CameraScreen() {
     );
   }
 
-  function handleSnapBadge() {
-    console.log('📸 Snap Badge pressed');
-    // Implementation will come later
+  async function handleSnapBadge() {
+    try {
+      if (!cameraRef.current) {
+        console.warn('Camera not ready');
+        return;
+      }
+
+      console.log("before take picture")
+      const photo = await cameraRef.current.takePictureAsync({
+        skipMetadata: true,
+      });
+      console.log("after take picture")
+      setPhoto(photo);
+
+      const formData = new FormData();
+      formData.append('apikey', ocrApiKey);
+      formData.append('language', 'eng');
+      formData.append('isOverlayRequired', 'false');
+      formData.append('file', {
+        uri: photo.uri,
+        type: 'image/jpeg',
+        name: 'photo.jpg',
+      });
+
+      console.log('📷 Photo URI:', photo.uri);
+
+      console.log('polling ocr space: ',{formData})
+      const response = await fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      console.log("response: ",{result})
+      const parsedText = result?.ParsedResults?.[0]?.ParsedText?.trim();
+
+      if (parsedText) {
+        console.log('✅ OCR Result:', parsedText);
+        setInputText(parsedText.split('\n')[0]); // Use first line
+      } else {
+        console.warn('No text found in image');
+      }
+    } catch (err) {
+      console.error('Error snapping badge:', err);
+    }
   }
 
   function handleAddNameToList() {
-    console.log('📸 Add name to list');
+    console.log('📋 Add name to list:', inputText);
     // Implementation will come later
   }
+
   return (
     <View style={styles.container}>
       <View style={styles.cameraWrapper}>
-        <CameraView style={styles.camera} facing={facing} />
+        <CameraView
+          ref={cameraRef}
+          style={styles.camera}
+          facing={facing}
+        />
       </View>
 
       <TextInput
@@ -59,6 +117,13 @@ export default function CameraScreen() {
         <Text style={styles.addNameButtonText}>Add name to list</Text>
       </TouchableOpacity>
 
+      {photo?.uri && (
+        <Image
+          source={{ uri: photo.uri }}
+          style={{ width: 300, height: 200, marginVertical: 16 }}
+        />
+        )
+      }
     </View>
   );
 }
