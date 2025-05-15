@@ -15,6 +15,8 @@ import {
   useCameraPermissions,
 } from 'expo-camera';
 
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+
 import { useSettings } from '@/contexts/settings-context';
 
 export default function CameraScreen() {
@@ -47,24 +49,37 @@ export default function CameraScreen() {
         return;
       }
 
+      setInputText('');
+
       console.log("before take picture")
       const photo = await cameraRef.current.takePictureAsync({
         skipMetadata: true,
       });
       console.log("after take picture")
-      setPhoto(photo);
+
+      console.log('📷 Photo URI:', photo.uri);
+
+      const manipulator = ImageManipulator.manipulate(photo.uri);
+      manipulator.resize({ width: 640 });
+      const imageRef = await manipulator.renderAsync();              // apply the resize operation
+      const compressedImage = await imageRef.saveAsync({
+        format: SaveFormat.JPEG,   // output as JPEG (allows compression) :contentReference[oaicite:16]{index=16}
+        compress: 0.5             // 50% quality compression :contentReference[oaicite:17]{index=17}
+        // You can omit 'base64' since we'll upload the file directly
+      });
+      console.log("Compressed image saved at:", compressedImage.uri);
+      setPhoto( compressedImage );
 
       const formData = new FormData();
       formData.append('apikey', ocrApiKey);
       formData.append('language', 'eng');
       formData.append('isOverlayRequired', 'false');
       formData.append('file', {
-        uri: photo.uri,
+        uri: compressedImage.uri,
         type: 'image/jpeg',
         name: 'photo.jpg',
       });
 
-      console.log('📷 Photo URI:', photo.uri);
 
       console.log('polling ocr space: ',{formData})
       const response = await fetch('https://api.ocr.space/parse/image', {
@@ -77,8 +92,9 @@ export default function CameraScreen() {
       const parsedText = result?.ParsedResults?.[0]?.ParsedText?.trim();
 
       if (parsedText) {
-        console.log('✅ OCR Result:', parsedText);
-        setInputText(parsedText.split('\n')[0]); // Use first line
+        const normalized = parsedText.replace(/\s+/g, ' ').trim();  // Remove line breaks and extra spaces
+        console.log('✅ OCR Result:', normalized );
+        setInputText(normalized);
       } else {
         console.warn('No text found in image');
       }
