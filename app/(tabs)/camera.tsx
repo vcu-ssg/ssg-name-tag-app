@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,19 +16,26 @@ import {
 } from 'expo-camera';
 
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { useSettings } from '@/contexts/settings-context';
 
 export default function CameraScreen() {
-  const { ocrApiKey,addScannedName,scannedNames } = useSettings();
+  const { ocrApiKey, addScannedName } = useSettings();
   const [permission, requestPermission] = useCameraPermissions();
   const [inputText, setInputText] = useState('');
-
   const [photo, setPhoto] = useState(null);
-
+  const [showCamera, setShowCamera] = useState(true);
   const cameraRef = useRef(null);
-
   const [facing] = useState<CameraType>('back');
+
+  // Manage camera lifecycle
+  useFocusEffect(
+    useCallback(() => {
+      setShowCamera(true);
+      return () => setShowCamera(false);
+    }, [])
+  );
 
   if (!permission) return <View />;
   if (!permission.granted) {
@@ -51,24 +58,23 @@ export default function CameraScreen() {
 
       setInputText('');
 
-      console.log("before take picture")
+      console.log("before take picture");
       const photo = await cameraRef.current.takePictureAsync({
         skipMetadata: true,
       });
-      console.log("after take picture")
+      console.log("after take picture");
 
       console.log('📷 Photo URI:', photo.uri);
 
       const manipulator = ImageManipulator.manipulate(photo.uri);
       manipulator.resize({ width: 640 });
-      const imageRef = await manipulator.renderAsync();              // apply the resize operation
+      const imageRef = await manipulator.renderAsync();
       const compressedImage = await imageRef.saveAsync({
-        format: SaveFormat.JPEG,   // output as JPEG (allows compression) :contentReference[oaicite:16]{index=16}
-        compress: 0.5             // 50% quality compression :contentReference[oaicite:17]{index=17}
-        // You can omit 'base64' since we'll upload the file directly
+        format: SaveFormat.JPEG,
+        compress: 0.5,
       });
       console.log("Compressed image saved at:", compressedImage.uri);
-      setPhoto( compressedImage );
+      setPhoto(compressedImage);
 
       const formData = new FormData();
       formData.append('apikey', ocrApiKey);
@@ -80,20 +86,19 @@ export default function CameraScreen() {
         name: 'photo.jpg',
       });
 
-
-      console.log('polling ocr space: ',{formData})
+      console.log('polling ocr space: ', { formData });
       const response = await fetch('https://api.ocr.space/parse/image', {
         method: 'POST',
         body: formData,
       });
 
       const result = await response.json();
-      console.log("response: ",{result})
+      console.log("response: ", { result });
       const parsedText = result?.ParsedResults?.[0]?.ParsedText?.trim();
 
       if (parsedText) {
-        const normalized = parsedText.replace(/\s+/g, ' ').trim();  // Remove line breaks and extra spaces
-        console.log('✅ OCR Result:', normalized );
+        const normalized = parsedText.replace(/\s+/g, ' ').trim();
+        console.log('✅ OCR Result:', normalized);
         setInputText(normalized);
       } else {
         console.warn('No text found in image');
@@ -117,11 +122,13 @@ export default function CameraScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.cameraWrapper}>
-        <CameraView
-          ref={cameraRef}
-          style={styles.camera}
-          facing={facing}
-        />
+        {showCamera && (
+          <CameraView
+            ref={cameraRef}
+            style={styles.camera}
+            facing={facing}
+          />
+        )}
       </View>
 
       <TextInput
@@ -144,8 +151,7 @@ export default function CameraScreen() {
           source={{ uri: photo.uri }}
           style={{ width: 300, height: 200, marginVertical: 16 }}
         />
-        )
-      }
+      )}
     </View>
   );
 }
@@ -176,7 +182,7 @@ const styles = StyleSheet.create({
   },
   cameraWrapper: {
     width: '100%',
-    height: 240, // roughly triple the previous height
+    height: 240,
     overflow: 'hidden',
     borderRadius: 12,
     backgroundColor: '#000',
@@ -184,7 +190,7 @@ const styles = StyleSheet.create({
   },
   camera: {
     width: '100%',
-    height: '300%', // still stretch camera view for cropping
+    height: '300%',
     transform: [{ translateY: '-33%' }],
   },
   input: {
@@ -201,9 +207,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 12,
   },
   addNameButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#34C759',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
