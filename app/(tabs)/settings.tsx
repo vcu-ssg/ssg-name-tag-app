@@ -30,17 +30,17 @@ export default function SettingsScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{ flex: 1 }}>
-          <ParallaxScrollView
-            headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-            headerImage={
-              <IconSymbol
-                size={310}
-                color="#808080"
-                name="gear.circle.fill"
-                style={styles.headerImage}
-              />
-            }
-          >
+        <ParallaxScrollView
+          headerBackgroundColor={{ light: '#A7DCA1', dark: '#1D4725' }}
+          headerImage={
+            <IconSymbol
+              size={310}
+              color="#808080"
+              name="gear.circle.fill"
+              style={styles.headerImage}
+            />
+          }
+        >
             <ThemedView style={styles.container}>
               <ThemedText type="title">Settings</ThemedText>
 

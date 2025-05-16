@@ -1,18 +1,16 @@
-import { useState, useEffect,useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   TextInput,
   View,
   Text,
   Alert,
-  Button,
-  Platform,
   KeyboardAvoidingView,
-  ScrollView,
+  Platform,
+  TouchableOpacity,
 } from 'react-native';
 
 import debounce from 'lodash.debounce';
-
 import {
   writeAsStringAsync,
   getInfoAsync,
@@ -23,21 +21,21 @@ import {
   composeAsync,
   isAvailableAsync as isMailAvailable,
 } from 'expo-mail-composer';
-
 import {
   shareAsync,
   isAvailableAsync as isSharingAvailable,
 } from 'expo-sharing';
 
+import { useRouter } from 'expo-router';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { useSettings } from '@/contexts/settings-context';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { ThemedText } from '@/components/ThemedText';
 
-
 export default function MailScreen() {
-  const { email, scannedNames,setScannedNames } = useSettings();
+  const router = useRouter();
+  const { email, scannedNames, setScannedNames } = useSettings();
 
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -62,8 +60,8 @@ export default function MailScreen() {
     setBody(text);
     const updatedNames = text
       .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
     debouncedSetScannedNames(updatedNames);
   };
 
@@ -74,17 +72,14 @@ export default function MailScreen() {
     }
 
     try {
-
-      // Build CSV content with names in column B
       const csvRows = [
-        [`"${subject}"`, ''],                 // A1, B1
-        ...scannedNames.map(name => ['', `"${name}"`]) // B2, B3, ...
-      ].map(row => row.join(','));
+        [`"${subject}"`, ''],
+        ...scannedNames.map((name) => ['', `"${name}"`]),
+      ].map((row) => row.join(','));
 
       const csvContent = csvRows.join('\n');
-
-      // Save file to a shareable directory
       const fileUri = documentDirectory + 'attendees.csv';
+
       await writeAsStringAsync(fileUri, csvContent, {
         encoding: EncodingType.UTF8,
       });
@@ -95,7 +90,6 @@ export default function MailScreen() {
         return;
       }
 
-      // Construct body text with TO and SUBJECT included
       const formattedBody = `To: ${email}\nSubject: ${subject}\n\nAttendees:\n${scannedNames.join('\n')}`;
 
       if (Platform.OS === 'ios') {
@@ -111,8 +105,7 @@ export default function MailScreen() {
           body: formattedBody,
           attachments: [fileUri],
         });
-
-      } else if (Platform.OS === 'android') {
+      } else {
         const sharingAvailable = await isSharingAvailable();
         if (!sharingAvailable) {
           Alert.alert('Sharing Unavailable', 'Cannot share on this device.');
@@ -122,27 +115,42 @@ export default function MailScreen() {
         await shareAsync(fileUri, {
           dialogTitle: 'Share attendee list',
           mimeType: 'text/csv',
-          // Optionally include formattedBody in message (if supported)
-          UTI: 'public.comma-separated-values-text', // safe to include
+          UTI: 'public.comma-separated-values-text',
           message: formattedBody,
         });
       }
-
     } catch (error) {
       console.error('handleSend error:', error);
       Alert.alert('Unexpected Error', 'Failed to send or share email.');
     }
   };
 
+  const handleClear = () => {
+    Alert.alert(
+      'Clear Attendee List?',
+      'This will erase all scanned names and return to the Scan tab.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            setScannedNames([]);
+            router.push('/camera');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={80} // adjust if needed
+      keyboardVerticalOffset={80}
     >
-
       <ParallaxScrollView
-        headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+        headerBackgroundColor={{ light: '#F7C58C', dark: '#4A3719' }}
         headerImage={
           <IconSymbol
             size={310}
@@ -151,7 +159,11 @@ export default function MailScreen() {
             style={styles.headerImage}
           />
         }
+        autoScrollToBottom
       >
+        <ThemedText style={styles.countText}>
+          {`Name tags scanned: ${scannedNames.length}`}
+        </ThemedText>
 
         <View style={styles.field}>
           <Text style={styles.label}>To:</Text>
@@ -179,10 +191,15 @@ export default function MailScreen() {
           />
         </View>
 
-        <View style={styles.sendButton}>
-          <Button title="Send" onPress={handleSend} />
-        </View>
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity style={styles.buttonSend} onPress={handleSend}>
+            <Text style={styles.buttonText}>Send</Text>
+          </TouchableOpacity>
 
+          <TouchableOpacity style={styles.buttonClear} onPress={handleClear}>
+            <Text style={styles.buttonText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
       </ParallaxScrollView>
     </KeyboardAvoidingView>
   );
@@ -191,15 +208,6 @@ export default function MailScreen() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  scroll: {
-    paddingHorizontal: 10,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
-  headerIcon: {
-    alignItems: 'center',
-    marginBottom: 20,
   },
   field: {
     marginBottom: 16,
@@ -220,6 +228,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     fontSize: 16,
   },
+  countText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: -30,
+    marginBottom: 0,
+  },
   textarea: {
     borderColor: '#ccc',
     borderWidth: 1,
@@ -228,8 +242,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 150,
   },
-  sendButton: {
+  buttonGroup: {
     marginTop: 20,
     alignItems: 'center',
+    gap: 12,
+  },
+  buttonSend: {
+    backgroundColor: '#28a745', // green
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    minWidth: 160,
+    alignItems: 'center',
+  },
+  buttonClear: {
+    backgroundColor: '#ff6b6b', // light red
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    minWidth: 160,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

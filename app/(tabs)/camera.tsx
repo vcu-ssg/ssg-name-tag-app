@@ -25,7 +25,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
 export default function CameraScreen() {
-  const { ocrApiKey, addScannedName } = useSettings();
+  const { ocrApiKey, addScannedName,scannedNames } = useSettings();
   const [permission, requestPermission] = useCameraPermissions();
   const [inputText, setInputText] = useState('');
   const [photo, setPhoto] = useState(null);
@@ -125,17 +125,22 @@ export default function CameraScreen() {
 
   return (
 
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="camera.fill"
-          style={styles.headerImage}
-        />
-      }
-    >
+      <ParallaxScrollView
+        headerBackgroundColor={{ light: '#DCA1D1', dark: '#471D3F' }}
+        headerImage={
+          <IconSymbol
+            size={310}
+            color="#808080"
+            name="camera.fill"
+            style={styles.headerImage}
+          />
+        }
+        autoScrollToBottom
+      >
+
+      <ThemedText style={styles.countText}>
+        {`Name tags scanned: ${scannedNames.length}`}
+      </ThemedText>
 
       <View style={styles.cameraWrapper}>
         {showCamera && (
@@ -247,4 +252,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  countText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 0,
+    marginTop: -30,
+  },
+
 });

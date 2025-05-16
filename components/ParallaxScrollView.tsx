@@ -1,36 +1,42 @@
 import type { PropsWithChildren, ReactElement } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import Animated, {
   interpolate,
   useAnimatedRef,
   useAnimatedStyle,
   useScrollViewOffset,
-  useSharedValue,
-  useDerivedValue,
 } from 'react-native-reanimated';
+import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-const HEADER_HEIGHT = 250;
+//
+// CONFIGURABLE: Set header height as a % of screen height
+//
+const HEADER_HEIGHT_PERCENT = 0.25;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const HEADER_HEIGHT = SCREEN_HEIGHT * HEADER_HEIGHT_PERCENT;
 
 type Props = PropsWithChildren<{
   headerImage: ReactElement;
   headerBackgroundColor: { dark: string; light: string };
-  stickyHeader: ReactElement;
+  stickyHeader?: ReactElement;
   respectStatusBar?: boolean;
   respectNavigationBar?: boolean;
+  autoScrollToBottom?: boolean;
 }>;
 
 export default function ParallaxScrollView({
   children,
   headerImage,
-  stickyHeader,
   headerBackgroundColor,
+  stickyHeader,
   respectStatusBar = true,
   respectNavigationBar = true,
+  autoScrollToBottom = false,
 }: Props) {
   const colorScheme = useColorScheme() ?? 'light';
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -41,7 +47,7 @@ export default function ParallaxScrollView({
   const topPadding = respectStatusBar ? insets.top : 0;
   const bottomPadding = respectNavigationBar ? bottomInset : 0;
 
-  // Animate header scale and position
+  // Animate header scaling and translation
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
       {
@@ -52,22 +58,46 @@ export default function ParallaxScrollView({
         ),
       },
       {
-        scale: interpolate(scrollOffset.value, [-HEADER_HEIGHT, 0, HEADER_HEIGHT], [2, 1, 1]),
+        scale: interpolate(
+          scrollOffset.value,
+          [-HEADER_HEIGHT, 0, HEADER_HEIGHT],
+          [2, 1, 1]
+        ),
       },
     ],
   }));
 
   // Animate sticky header opacity
   const stickyHeaderStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollOffset.value, [HEADER_HEIGHT - 50, HEADER_HEIGHT], [0, 1]),
+    opacity: interpolate(
+      scrollOffset.value,
+      [HEADER_HEIGHT - 50, HEADER_HEIGHT],
+      [0, 1]
+    ),
   }));
+
+  // Auto-scroll to bottom on mount
+  useEffect(() => {
+    if (autoScrollToBottom && scrollRef.current) {
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: false });
+      }, 50); // slight delay ensures layout is ready
+    }
+  }, [autoScrollToBottom]);
 
   return (
     <ThemedView style={styles.container}>
-      {/* Sticky mini-header (floating) */}
-      <Animated.View style={[styles.stickyHeader, { top: topPadding }, stickyHeaderStyle]}>
-        {stickyHeader}
-      </Animated.View>
+      {stickyHeader && (
+        <Animated.View
+          style={[
+            styles.stickyHeader,
+            { top: topPadding },
+            stickyHeaderStyle,
+          ]}
+        >
+          {stickyHeader}
+        </Animated.View>
+      )}
 
       <Animated.ScrollView
         ref={scrollRef}
@@ -107,7 +137,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.95)', // adjust based on theme
+    backgroundColor: 'rgba(255,255,255,0.95)',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
