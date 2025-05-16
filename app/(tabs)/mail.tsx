@@ -30,6 +30,7 @@ import {
 } from 'expo-sharing';
 
 
+import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { useSettings } from '@/contexts/settings-context';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { ThemedText } from '@/components/ThemedText';
@@ -139,10 +140,18 @@ export default function MailScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={80} // adjust if needed
     >
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.headerIcon}>
-          <IconSymbol size={200} name="mail" color="#808080" />
-        </View>
+
+      <ParallaxScrollView
+        headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+        headerImage={
+          <IconSymbol
+            size={310}
+            color="#808080"
+            name="mail"
+            style={styles.headerImage}
+          />
+        }
+      >
 
         <View style={styles.field}>
           <Text style={styles.label}>To:</Text>
@@ -173,7 +182,8 @@ export default function MailScreen() {
         <View style={styles.sendButton}>
           <Button title="Send" onPress={handleSend} />
         </View>
-      </ScrollView>
+
+      </ParallaxScrollView>
     </KeyboardAvoidingView>
   );
 }

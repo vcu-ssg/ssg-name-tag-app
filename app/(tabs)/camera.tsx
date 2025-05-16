@@ -19,6 +19,10 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { useSettings } from '@/contexts/settings-context';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
 export default function CameraScreen() {
   const { ocrApiKey, addScannedName } = useSettings();
@@ -120,7 +124,19 @@ export default function CameraScreen() {
   }
 
   return (
-    <View style={styles.container}>
+
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+      headerImage={
+        <IconSymbol
+          size={310}
+          color="#808080"
+          name="camera.fill"
+          style={styles.headerImage}
+        />
+      }
+    >
+
       <View style={styles.cameraWrapper}>
         {showCamera && (
           <CameraView
@@ -152,11 +168,17 @@ export default function CameraScreen() {
           style={{ width: 300, height: 200, marginVertical: 16 }}
         />
       )}
-    </View>
+    </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  headerImage: {
+    color: '#808080',
+    bottom: -90,
+    left: -35,
+    position: 'absolute',
+  },
   container: {
     flex: 1,
     padding: 16,
